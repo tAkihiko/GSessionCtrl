@@ -387,11 +387,28 @@ namespace GSessionCtrl
         /// </summary>
         /// <param name="id">ログインID</param>
         /// <param name="passwd">ログインパスワード</param>
-        public static void ParamSetting(string id, string passwd)
+        /// <returns>true: 成功, false: 失敗</returns>
+        public static bool ParamSetting(string id, string passwd)
         {
             m_id = id;
             m_passwd = passwd;
 
+            try
+            {
+                m_sid = _GetUserID(id, passwd);
+            }
+            catch (Exception)
+            {
+                m_sid = -1;
+                return false;
+            }
+
+            if (m_sid < 0)
+            {
+                return false;
+            }
+
+            return true;
         }
 
 
