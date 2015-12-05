@@ -6,6 +6,7 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Xml;
 
 namespace GSessionCtrl
 {
@@ -390,6 +391,33 @@ namespace GSessionCtrl
         {
             m_id = id;
             m_passwd = passwd;
+
+        }
+
+
+        /// <summary>
+        /// ユーザID取得
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="passwd"></param>
+        /// <returns></returns>
+        private static int _GetUserID(string id, string passwd)
+        {
+            string whoami = "http://172.16.0.5:8080/gsession/api/user/whoami.do";
+            Hashtable vals = new Hashtable();
+            string iam;
+            iam = _HttpPost(whoami, vals, null);
+            XmlDocument doc = new XmlDocument();
+            doc.LoadXml(iam);
+            XmlNodeList list = doc.GetElementsByTagName("Result");
+            foreach (XmlNode node in list[0].ChildNodes)
+            {
+                if (node.LocalName == "Usid")
+                {
+                    return int.Parse(node.InnerText);
+                }
+            }
+            return -1;
         }
 
         /// <summary>
