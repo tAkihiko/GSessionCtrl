@@ -266,7 +266,7 @@ namespace GSessionCtrl
         /// <param name="status">在席状態 1:在席 2:不在</param>
         /// <param name="cc">Cookieコンテナ</param>
         /// <returns>変更成否</returns>
-        private static bool _Zaiseki(int status, CookieContainer cc)
+        private static bool _Zaiseki(int status, string message, CookieContainer cc)
         {
             string zaiseki = "http://172.16.0.5:8080/gsession/zaiseki/zskmain.do";
 
@@ -278,7 +278,7 @@ namespace GSessionCtrl
             Hashtable vals = new Hashtable();
             vals["CMD"] = "zskEdit";
             vals["zskUioStatus"] = status;
-            vals["zskUioBiko"] = "";
+            vals["zskUioBiko"] = message;
             vals["mainReDspFlg"] = 0;
 
             _HttpPost(zaiseki, vals, cc);
@@ -392,7 +392,7 @@ namespace GSessionCtrl
         /// 在席化
         /// </summary>
         /// <returns>成否</returns>
-        public static bool Zaiseki()
+        public static bool Zaiseki(string message = "")
         {
             CookieContainer cc = new CookieContainer();
             bool login = false;
@@ -407,7 +407,7 @@ namespace GSessionCtrl
             }
 
             // 在席化
-            zaiseki = _Zaiseki(1, cc);
+            zaiseki = _Zaiseki(1, message, cc);
 
             // ログアウト
             logout = _Logout(cc);
@@ -419,7 +419,7 @@ namespace GSessionCtrl
         /// 不在化
         /// </summary>
         /// <returns>成否</returns>
-        public static bool Huzai()
+        public static bool Huzai(string message = "")
         {
             CookieContainer cc = new CookieContainer();
             bool login = false;
@@ -434,7 +434,7 @@ namespace GSessionCtrl
             }
 
             // 不在化
-            zaiseki = _Zaiseki(2, cc);
+            zaiseki = _Zaiseki(2, message, cc);
 
             // ログアウト
             logout = _Logout(cc);
