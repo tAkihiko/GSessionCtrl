@@ -304,84 +304,60 @@ namespace GSessionCtrl
         /// <returns>スケジュールのリスト</returns>
         private static List<ScheduleNode> _Sch(int usrid, CookieContainer cc)
         {
-            string sch = "http://172.16.0.5:8080/gsession/schedule/sch010.do";
+            string sch = "http://172.16.0.5:8080/gsession/api/schedule/search.do";
 
             Hashtable vals = new Hashtable();
             DateTime today = DateTime.Today;
             today.ToLocalTime();
             string date = today.ToString("yyyyMMdd");
 
-            vals["CMD"] = "list";
-            vals["dspMod"] = 1;
-            vals["sch010SelectUsrSid"] = usrid;
-            vals["sch010SelectUsrKbn"] = 0;
-            vals["cmd"] = "list";
-            vals["sch010DspDate"] = date;
-            vals["changeDateFlg"] = 0;
-            vals["sch010SelectDate"] = "";
-            vals["sch010SchSid"] = "";
-            vals["sch010DspGpSid"] = 6; // 全社員グループ
-            vals["sch010searchWord"] = "";
+            vals["usid"] = usrid;
 
             // スケジュールデータ取得
-            string html = _HttpPost(sch, vals, cc);
+            string xml = _HttpPost(sch, vals, cc);
 
-            HtmlAgilityPack.HtmlDocument doc = new HtmlAgilityPack.HtmlDocument();
-            doc.LoadHtml(html);
-            HtmlAgilityPack.HtmlNodeCollection inputNodes = doc.DocumentNode.SelectNodes("//tr");
-            if (inputNodes == null)
-            {
-                return null;
-            }
+            // スケジュールデータパース
+            XmlDocument doc = new XmlDocument();
+            doc.LoadXml(xml);
 
             List<ScheduleNode> schlist = new List<ScheduleNode>();
-            foreach (HtmlAgilityPack.HtmlNode node in inputNodes)
-            {
-                HtmlAgilityPack.HtmlNode name_n = node.SelectSingleNode(".//td[1]");
-                HtmlAgilityPack.HtmlNode b_day_n = node.SelectSingleNode(".//td[2]");
-                HtmlAgilityPack.HtmlNode e_day_n = node.SelectSingleNode(".//td[3]");
 
-                if (name_n == null || b_day_n == null || e_day_n == null)
-                {
+            XmlNodeList list = doc.GetElementsByTagName("Result");
+            string name, title, text, b_dt_str, e_dt_str;
+            foreach(XmlNode node in list){
+                name = "";
+                title = "";
+                text = "";
+                b_dt_str = "";
+                e_dt_str = "";
+                foreach(XmlNode child in node.ChildNodes) {
+                    switch (child.LocalName)
+                    {
+                        case "Title":
+                            title = child.InnerText;
+                            break;
+                        case "Naiyo":
+                            text = child.InnerText;
+                            break;
+                        case "StartDateTime":
+                            b_dt_str = child.InnerText;
+                            break;
+                        case "EndDateTime":
+                            e_dt_str = child.InnerText;
+                            break;
+                        case "UserName":
+                            name = child.InnerText;
+                            break;
+                        default:
+                            break;
+                    }
+                }
+
+                if(name == "" || b_dt_str == "" || e_dt_str == ""){
                     continue;
                 }
 
-                if (name_n.GetAttributeValue("class","") != "td_type1" && name_n.GetAttributeValue("class","") != "td_type29")
-                {
-                    continue;
-                }
-
-                if (b_day_n.GetAttributeValue("class", "") != "td_type1" && b_day_n.GetAttributeValue("class", "") != "td_type29")
-                {
-                    continue;
-                }
-
-                if (e_day_n.GetAttributeValue("class", "") != "td_type1" && e_day_n.GetAttributeValue("class", "") != "td_type29")
-                {
-                    continue;
-                }
-
-                HtmlAgilityPack.HtmlNode aNode = node.SelectSingleNode(".//a");
-
-                string name = name_n.InnerText;
-                string[] b_day = b_day_n.InnerText.Split('　');
-                string[] e_day = e_day_n.InnerText.Split('　');
-                string title = aNode.InnerText;
-                string[] b_day_date = b_day[0].Split('/');
-                string[] b_day_time = b_day[1].Split(':');
-                string[] e_day_date = e_day[0].Split('/');
-                string[] e_day_time = e_day[1].Split(':');
-
-                title = Regex.Replace(title, "[\r\n]", "");
-                title = Regex.Replace(title, "<!--.*?-->", "");
-                title = Regex.Replace(title, "^[ 　]+", "");
-                title = Regex.Replace(title, "[ 　]+$", "");
-
-                DateTimeKind kind = DateTimeKind.Local;
-                DateTime begin = new DateTime(int.Parse(b_day_date[0]), int.Parse(b_day_date[1]), int.Parse(b_day_date[2]), int.Parse(b_day_time[0]), int.Parse(b_day_time[1]), 0, kind); ;
-                DateTime end = new DateTime(int.Parse(e_day_date[0]), int.Parse(e_day_date[1]), int.Parse(e_day_date[2]), int.Parse(e_day_time[0]), int.Parse(e_day_time[1]), 0, kind);
-
-                schlist.Add(new ScheduleNode(name, begin, end, title, ""));
+                schlist.Add(new ScheduleNode(name, DateTime.ParseExact(b_dt_str, "yyyy/MM/dd HH:mm:ss", null), DateTime.ParseExact(e_dt_str, "yyyy/MM/dd HH:mm:ss", null), title, text));
             }
 
             return schlist;
@@ -481,17 +457,8 @@ namespace GSessionCtrl
             CookieContainer cc = new CookieContainer();
             List<ScheduleNode> schlist = null;
 
-            // ログイン
-            if (!_Login(m_id, m_passwd, cc))
-            {
-                return null;
-            }
-
             // スケジュール取得
             schlist = _Sch(m_sid, cc);
-
-            // ログアウト
-            _Logout(cc);
 
             return schlist;
         }
