@@ -272,6 +272,11 @@ namespace GSessionCtrl
         /// <returns>変更成否</returns>
         private static bool _Zaiseki(int userid, int status, string message, CookieContainer cc)
         {
+            if (userid < 0)
+            {
+                return false;
+            }
+
             string zaiseki = "http://172.16.0.5:8080/gsession/api/zaiseki/edit.do";
 
             if (status != 1 && status != 0)
