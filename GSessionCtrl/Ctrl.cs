@@ -136,6 +136,7 @@ namespace GSessionCtrl
             req.ContentLength = data.Length;
             req.CookieContainer = cc;
             req.UserAgent = m_useragent;
+            req.Credentials = new System.Net.NetworkCredential(m_id, m_passwd);
 
             // ポスト・データの書き込み
             Stream reqStream = req.GetRequestStream();
@@ -263,23 +264,26 @@ namespace GSessionCtrl
         /// <summary>
         /// 在席状態変更
         /// </summary>
-        /// <param name="status">在席状態 1:在席 2:不在</param>
+        /// <param name="usrid">GSession上の管理ID</param>
+        /// <param name="status">在席状態 1:在席 2:不在 0:その他</param>
+        /// <param name="message">メッセージ</param>
         /// <param name="cc">Cookieコンテナ</param>
         /// <returns>変更成否</returns>
-        private static bool _Zaiseki(int status, string message, CookieContainer cc)
+        private static bool _Zaiseki(int userid, int status, string message, CookieContainer cc)
         {
-            string zaiseki = "http://172.16.0.5:8080/gsession/zaiseki/zskmain.do";
+            string zaiseki = "http://172.16.0.5:8080/gsession/api/zaiseki/edit.do";
 
-            if (status != 1)
+            if (status != 1 && status != 0)
             {
+                // status は不在を優先
                 status = 2;
             }
 
             Hashtable vals = new Hashtable();
-            vals["CMD"] = "zskEdit";
-            vals["zskUioStatus"] = status;
-            vals["zskUioBiko"] = message;
-            vals["mainReDspFlg"] = 0;
+            vals["usid"] = userid;
+            vals["status"] = status;
+            vals["comment"] = message;
+            vals["comeflg"] = 0;
 
             _HttpPost(zaiseki, vals, cc);
 
@@ -395,24 +399,12 @@ namespace GSessionCtrl
         public static bool Zaiseki(string message = "")
         {
             CookieContainer cc = new CookieContainer();
-            bool login = false;
-            bool logout = false;
             bool zaiseki = false;
 
-            // ログイン
-            login = _Login(m_id, m_passwd, cc);
-            if (!login)
-            {
-                return false;
-            }
-
             // 在席化
-            zaiseki = _Zaiseki(1, message, cc);
+            zaiseki = _Zaiseki(m_sid, 1, message, cc);
 
-            // ログアウト
-            logout = _Logout(cc);
-
-            return (zaiseki && logout);
+            return zaiseki;
         }
 
         /// <summary>
@@ -422,24 +414,12 @@ namespace GSessionCtrl
         public static bool Huzai(string message = "")
         {
             CookieContainer cc = new CookieContainer();
-            bool login = false;
-            bool logout = false;
             bool zaiseki = false;
 
-            // ログイン
-            login = _Login(m_id, m_passwd, cc);
-            if (!login)
-            {
-                return false;
-            }
-
             // 不在化
-            zaiseki = _Zaiseki(2, message, cc);
+            zaiseki = _Zaiseki(m_sid, 2, message, cc);
 
-            // ログアウト
-            logout = _Logout(cc);
-
-            return (zaiseki && logout);
+            return zaiseki;
         }
 
         /// <summary>
