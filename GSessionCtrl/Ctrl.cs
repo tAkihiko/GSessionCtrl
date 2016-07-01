@@ -120,8 +120,10 @@ namespace GSessionCtrl
         /// <param name="url">送信先URL</param>
         /// <param name="vals">送信パラメータ</param>
         /// <param name="cc">Cookieコンテナ</param>
+        /// <param name="id">ログインID</param>
+        /// <param name="password">ログインパスワード</param>
         /// <returns>取得テキスト</returns>
-        private static string _HttpPost(string url, Hashtable vals, CookieContainer cc)
+        private static string _HttpPost(string url, Hashtable vals, CookieContainer cc, string id, string password)
         {
             string param = "";
             foreach (string k in vals.Keys)
@@ -137,7 +139,7 @@ namespace GSessionCtrl
             req.ContentLength = data.Length;
             req.CookieContainer = cc;
             req.UserAgent = m_useragent;
-            req.Credentials = new System.Net.NetworkCredential(m_id, m_passwd);
+            req.Credentials = new System.Net.NetworkCredential(id, password);
 
             // ポスト・データの書き込み
             Stream reqStream = req.GetRequestStream();
@@ -202,7 +204,7 @@ namespace GSessionCtrl
             vals["cmn001Passwd"] = password;
 
             // ログイン成否取得
-            html = _HttpPost(login, vals, cc);
+            html = _HttpPost(login, vals, cc, m_id, m_passwd);
 
             doc.LoadHtml(html);
             HtmlAgilityPack.HtmlNodeCollection divNodes = doc.DocumentNode.SelectNodes("//div");
@@ -291,7 +293,7 @@ namespace GSessionCtrl
             vals["comment"] = message;
             vals["comeflg"] = 0;
 
-            _HttpPost(zaiseki, vals, cc);
+            _HttpPost(zaiseki, vals, cc, m_id, m_passwd);
 
             return true;
         } 
@@ -314,7 +316,7 @@ namespace GSessionCtrl
             vals["usid"] = usrid;
 
             // スケジュールデータ取得
-            string xml = _HttpPost(sch, vals, cc);
+            string xml = _HttpPost(sch, vals, cc, m_id, m_passwd);
 
             // スケジュールデータパース
             XmlDocument doc = new XmlDocument();
@@ -371,8 +373,6 @@ namespace GSessionCtrl
         /// <returns>true: 成功, false: 失敗</returns>
         public static bool ParamSetting(string id, string passwd)
         {
-            m_id = id;
-            m_passwd = passwd;
 
             try
             {
@@ -385,6 +385,36 @@ namespace GSessionCtrl
             }
 
             if (m_sid < 0)
+            {
+                return false;
+            }
+
+            // 取得成功時に格納
+            m_id = id;
+            m_passwd = passwd;
+
+            return true;
+        }
+
+        /// <summary>
+        /// パラメータチェック
+        /// </summary>
+        /// <param name="id">ログインID</param>
+        /// <param name="passwd">ログインパスワード</param>
+        /// <returns>true: 成功, false: 失敗</returns>
+        public static bool ParamCheck(string id, string passwd)
+        {
+            int sid = -1;
+            try
+            {
+                sid = _GetUserID(id, passwd);
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+
+            if (sid < 0)
             {
                 return false;
             }
@@ -404,7 +434,7 @@ namespace GSessionCtrl
             string whoami = "http://172.16.0.5:8080/gsession/api/user/whoami.do";
             Hashtable vals = new Hashtable();
             string iam;
-            iam = _HttpPost(whoami, vals, null);
+            iam = _HttpPost(whoami, vals, null, id, passwd);
             XmlDocument doc = new XmlDocument();
             doc.LoadXml(iam);
             XmlNodeList list = doc.GetElementsByTagName("Result");
