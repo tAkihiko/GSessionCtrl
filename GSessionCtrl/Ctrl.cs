@@ -387,6 +387,21 @@ namespace GSessionCtrl
         }
 
         /// <summary>
+        /// バージョンを返す
+        /// </summary>
+        /// <returns>バージョン番号</returns>
+        public static System.Version GetVersion()
+        {
+            //自分自身のAssemblyを取得
+            System.Reflection.Assembly asm = System.Reflection.Assembly.GetExecutingAssembly();
+
+            //バージョンの取得
+            System.Version ver = asm.GetName().Version;
+
+            return ver;
+        }
+
+        /// <summary>
         /// GSessionパラメータ設定
         /// </summary>
         /// <param name="id">ログインID</param>
