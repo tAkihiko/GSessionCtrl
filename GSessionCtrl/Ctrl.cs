@@ -50,6 +50,8 @@ namespace GSessionCtrl
         /// </summary>
         public class ScheduleNode
         {
+            public ulong Id { get; private set; }
+
             /// <summary>
             /// スケジュール対象名
             /// </summary>
@@ -83,8 +85,9 @@ namespace GSessionCtrl
             /// <param name="end">スケジュール終了日時</param>
             /// <param name="title">スケジュールタイトル</param>
             /// <param name="text">スケジュール詳細</param>
-            public ScheduleNode(string name, DateTime begin, DateTime end, string title, string text)
+            public ScheduleNode(ulong id, string name, DateTime begin, DateTime end, string title, string text)
             {
+                Id = id;
                 Name = name;
                 Begin = begin;
                 End = end;
@@ -330,8 +333,10 @@ namespace GSessionCtrl
             List<ScheduleNode> schlist = new List<ScheduleNode>();
 
             XmlNodeList list = doc.GetElementsByTagName("Result");
+            ulong id;
             string name, title, text, b_dt_str, e_dt_str;
             foreach(XmlNode node in list){
+                id = 0;
                 name = "";
                 title = "";
                 text = "";
@@ -340,6 +345,17 @@ namespace GSessionCtrl
                 foreach(XmlNode child in node.ChildNodes) {
                     switch (child.LocalName)
                     {
+                        case "Schsid":
+                            try
+                            {
+                                id = UInt64.Parse(child.InnerText);
+                            }
+                            catch (Exception)
+                            {
+                                id = 0;
+                            }
+                            break;
+                           
                         case "Title":
                             title = child.InnerText;
                             break;
@@ -360,11 +376,11 @@ namespace GSessionCtrl
                     }
                 }
 
-                if(name == "" || b_dt_str == "" || e_dt_str == ""){
+                if(id == 0 || name == "" || b_dt_str == "" || e_dt_str == ""){
                     continue;
                 }
 
-                schlist.Add(new ScheduleNode(name, DateTime.ParseExact(b_dt_str, "yyyy/MM/dd HH:mm:ss", null), DateTime.ParseExact(e_dt_str, "yyyy/MM/dd HH:mm:ss", null), title, text));
+                schlist.Add(new ScheduleNode(id, name, DateTime.ParseExact(b_dt_str, "yyyy/MM/dd HH:mm:ss", null), DateTime.ParseExact(e_dt_str, "yyyy/MM/dd HH:mm:ss", null), title, text));
             }
 
             return schlist;
