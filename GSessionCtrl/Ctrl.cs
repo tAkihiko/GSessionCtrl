@@ -26,6 +26,11 @@ namespace GSessionCtrl
         static string m_useragent = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.116 Safari/537.36";
 
         /// <summary>
+        /// ベースURL
+        /// </summary>
+        static string m_baseurl = "http://172.16.0.5:8080/gsession";
+
+        /// <summary>
         /// GSession ユーザID
         /// </summary>
         static string m_id = "";
@@ -167,7 +172,7 @@ namespace GSessionCtrl
         /// <returns>ログイン成否</returns>
         private static bool _Login(string id, string password, CookieContainer cc)
         {
-            string login = "http://172.16.0.5:8080/gsession/common/cmn001.do";
+            string login = m_baseurl + "/common/cmn001.do";
             string html = "";
 
             // ログイン・ページへのアクセス
@@ -231,7 +236,7 @@ namespace GSessionCtrl
             }
 
             // GSessionのユーザID取得
-            string schmain = "http://172.16.0.5:8080/gsession/schedule/schmain.do";
+            string schmain = m_baseurl + "/schedule/schmain.do";
             html = _HttpGet(schmain, cc);
             doc.LoadHtml(html);
             inputNodes = doc.DocumentNode.SelectNodes("//input");
@@ -259,7 +264,7 @@ namespace GSessionCtrl
         /// <returns>ログアウト成否</returns>
         private static bool _Logout(CookieContainer cc)
         {
-            string logout = "http://172.16.0.5:8080/gsession/common/cmn001.do?CMD=logout";
+            string logout = m_baseurl + "/common/cmn001.do?CMD=logout";
             _HttpGet(logout, cc);
             return true;
         }
@@ -279,7 +284,7 @@ namespace GSessionCtrl
                 return false;
             }
 
-            string zaiseki = "http://172.16.0.5:8080/gsession/api/zaiseki/edit.do";
+            string zaiseki = m_baseurl + "/api/zaiseki/edit.do";
 
             if (status != 1 && status != 0)
             {
@@ -306,7 +311,7 @@ namespace GSessionCtrl
         /// <returns>スケジュールのリスト</returns>
         private static List<ScheduleNode> _Sch(int usrid, CookieContainer cc)
         {
-            string sch = "http://172.16.0.5:8080/gsession/api/schedule/search.do";
+            string sch = m_baseurl + "/api/schedule/search.do";
 
             Hashtable vals = new Hashtable();
             DateTime today = DateTime.Today;
@@ -431,7 +436,7 @@ namespace GSessionCtrl
         /// <returns></returns>
         private static int _GetUserID(string id, string passwd)
         {
-            string whoami = "http://172.16.0.5:8080/gsession/api/user/whoami.do";
+            string whoami = m_baseurl + "/api/user/whoami.do";
             Hashtable vals = new Hashtable();
             string iam;
             iam = _HttpPost(whoami, vals, null, id, passwd);
