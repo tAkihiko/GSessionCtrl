@@ -28,7 +28,7 @@ namespace GSessionCtrl
         /// <summary>
         /// ベースURL
         /// </summary>
-        static string m_baseurl = "http://172.16.0.5:8080/gsession";
+        static string m_baseurl = "http://172.16.0.5:8085/gsession";
 
         /// <summary>
         /// GSession ユーザID
